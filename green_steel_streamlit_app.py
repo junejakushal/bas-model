@@ -155,9 +155,11 @@ with col2:
     st.table(bd_df)
 
     # CSV of sensitivity scenarios (low/med/high abatement cost)
-    st.subheader("Sensitivity Analysis: Abatement Cost")
+    st.subheader("Sensitivity Analysis: Abatement Cost sweep")
     sweep = []
-    for ac in [abatement_cost_per_tco2 * 0.8, abatement_cost_per_tco2, abatement_cost_per_tco2 * 1.2]:
+    multipliers = [0.8, 1.0, 1.2]
+    for idx, multiplier in enumerate(multipliers):
+        ac = abatement_cost_per_tco2 * multiplier
         r = compute_green_premium(
             product_type=product_type,
             baseline_emission=baseline_emission,
@@ -170,13 +172,13 @@ with col2:
             allocation_method=allocation_method,
         )
         sweep.append({
-            'abatement_cost_per_tCO2': round(ac, 2),
-            'premium_per_tonne': round(r['premium_per_tonne_steel'], 2),
-            'premium_per_tCO2': round(r['premium_per_tCO2'], 2) if r['premium_per_tCO2'] is not None else None,
-            'total_for_volume': round(r['total_premium_for_volume'], 2),
+            'abatement_cost_per_tCO2': ac,
+            'premium_per_tonne': r['premium_per_tonne_steel'],
+            'premium_per_tCO2': r['premium_per_tCO2'],
+            'total_for_volume': r['total_premium_for_volume'],
         })
-        sweep_df = pd.DataFrame(sweep)
-        st.table(sweep_df)
+    sweep_df = pd.DataFrame(sweep)
+    st.table(sweep_df)
 
 st.markdown("---")
 # st.caption("Built from the green steel premium model. Tweak inputs to match your commercial data and use the download button to export scenarios.")
