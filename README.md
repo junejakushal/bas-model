@@ -2,32 +2,29 @@
 
 ## Overview
 
-The calculator determines the **premium price** customers should pay for green steel (lower emissions) compared to conventional steel, based on cost-plus pricing with market adjustments.
+The calculator determines the **premium price** customers should pay for green steel (lower emissions) compared to conventional steel. The model uses an **amortized cost approach**, spreading the capital cost of decarbonization and verification over the project lifecycle. This base cost is then adjusted by multipliers for **Willingness-to-Pay (WTP)**, **Customer Segment**, and **Allocation Method**.
 
 ## Inputs
 
 ### Primary Emissions Parameters
-- **`baseline_emission`** (tCO₂/t): CO₂ emissions from conventional steel production
+- **`baseline_emission`** (tCO₂/t): CO₂ emissions from conventional steel production (e.g., ~2.36 tCO₂/t)
 - **`product_emission`** (tCO₂/t): CO₂ emissions from the green steel product
 
-### Cost Parameters
-- **`abatement_cost_per_tco2`** (₹/tCO₂): Cost to reduce emissions by one tonne of CO₂
-- **`verification_cost_per_tonne`** (₹/t): Fixed cost per tonne for verification and administration
-- **`margin_pct`** (%): Profit margin percentage
+### Project & Cost Parameters
+- **`abatement_cost_per_tco2`** (₹/tCO₂): Capital/Abatement cost to reduce emissions by one tonne of CO₂
+- **`project_lifetime_years`** (years): Amortization period for the project (default: 10 years)
+- **`verification_cost_per_year`** (₹/year): Annual fixed cost for verification and administration
+- **`annual_steel_production_tonnes`** (t/year): Annual production volume of the plant
 
 ### Market Adjustment Parameters
-- **`customer_segment`**: "automotive", "construction", or "other"
-- **`allocation_method`**: "physical" or "certificate" 
-- **`cbam_avoidance_per_tco2`** (₹/tCO₂): Value customers gain from avoiding CBAM (Carbon Border Adjustment Mechanism) costs
-- **`willingness_to_pay_multiplier`**: Market adjustment factor (e.g., 1.2 = 20% higher willingness)
+- **`willingness_to_pay_multiplier`** (factor): General market adjustment factor (e.g., 1.2 for 20% margin/markup).
+- **`customer_segment`**: "automotive", "construction", or "other".
+- **`allocation_method`**: "physical" or "certificate".
 
 ### Volume & Constraints
-- **`volume_tonnes`** (t): Total volume of steel
+- **`volume_tonnes`** (t): Total volume of steel for a specific order
 - **`floor_premium_per_t`** (₹/t): Minimum premium per tonne
 - **`ceiling_premium_per_t`** (₹/t): Maximum premium per tonne (optional)
-
-### Metadata
-- **`product_type`**: "HRC", "GI", or "Other" (for tracking only)
 
 ---
 
@@ -37,53 +34,53 @@ The calculator determines the **premium price** customers should pay for green s
 
 $$\text{CO₂ Savings} = \max(0, \text{baseline\_emission} - \text{product\_emission})$$
 
-### Step 2: Cost Components
+### Step 2: Amortized Cost Components
 
-**Abatement Component:**
-$$\text{Abatement Cost} = \text{CO₂ Savings} \times \text{abatement\_cost\_per\_tCO₂}$$
+**Annualized Abatement Cost per Tonne:**
+This spreads the abatement cost (viewed as upfront or lifecycle cost) over the project lifetime.
 
-**Verification Component:**
-$$\text{Verification Cost} = \text{verification\_cost\_per\_tonne}$$
+$$\text{Amortized Abatement} = \frac{\text{abatement\_cost\_per\_tCO₂} \times \text{CO₂ Savings}}{\text{project\_lifetime\_years}}$$
 
-**Base Cost Stack:**
-$$\text{Base Cost} = \text{Abatement Cost} + \text{Verification Cost}$$
+**Annualized Verification Cost per Tonne:**
+Spreads fixed annual verification costs over the annual production volume.
 
-### Step 3: Margin Addition
+$$\text{Amortized Verification} = \frac{\text{verification\_cost\_per\_year}}{\text{annual\_steel\_production\_tonnes}}$$
 
-$$\text{Margin Component} = \text{Base Cost} \times \frac{\text{margin\_pct}}{100}$$
+### Step 3: Base Premium Calculation
 
-### Step 4: Customer Value Offset
+$$\text{Base Premium} = \text{Amortized Abatement} + \text{Amortized Verification}$$
 
-$$\text{Customer Value Offset} = \text{CO₂ Savings} \times \text{cbam\_avoidance\_per\_tCO₂}$$
+### Step 4: Segment & Allocation Multipliers
 
-This represents the value customers capture by avoiding CBAM taxes, which reduces the premium they'll pay.
+The model applies specific multipliers based on the customer type and delivery method.
 
-### Step 5: Pre-Multiplier Premium
+**Allocation Factor:**
+- **Physical**: 1.15 (Premium for physical delivery)
+- **Certificate**: 1.0
 
-$$\text{Pre-Multiplier Premium} = \text{Base Cost} + \text{Margin Component} - \text{Customer Value Offset}$$
+**Segment Factor:**
+- **Automotive**: 1.20
+- **Construction**: 1.05
+- **Other**: 1.0
 
-### Step 6: Segment Multiplier Calculation
+$$\text{Total Multiplier} = \text{willingness\_to\_pay\_multiplier} \times \text{Allocation Factor} \times \text{Segment Factor}$$
 
-$$\text{Segment Multiplier} = \text{allocation\_factor} \times \text{customer\_segment\_factor}$$
+### Step 5: Final Premium Calculation
 
-Where:
-- **Allocation factor**: 1.15 for "physical", 1.0 for "certificate"
-- **Segment factor**: 1.2 for "automotive", 1.05 for "construction", 1.0 for "other"
+The base cost is adjusted by the total multiplier.
 
-### Step 7: Final Premium Calculation
-
-$$\text{Premium per Tonne} = \text{Pre-Multiplier Premium} \times \text{willingness\_to\_pay} \times \text{Segment Multiplier}$$
+$$\text{Final Premium per Tonne} = \text{Base Premium} \times \text{Total Multiplier}$$
 
 **With floor and ceiling constraints:**
-$$\text{Final Premium} = \min(\max(\text{Premium}, \text{floor}), \text{ceiling})$$
+$$\text{Final Premium} = \min(\max(\text{Calculated Premium}, \text{floor}), \text{ceiling})$$
 
-### Step 8: Derived Metrics
+### Step 6: Derived Metrics
 
 **Premium per tCO₂ saved:**
-$$\text{Premium per tCO₂} = \frac{\text{Premium per Tonne}}{\text{CO₂ Savings}}$$
+$$\text{Premium per tCO₂} = \frac{\text{Final Premium per Tonne}}{\text{CO₂ Savings}}$$
 
 **Total premium for volume:**
-$$\text{Total Premium} = \text{Premium per Tonne} \times \text{volume\_tonnes}$$
+$$\text{Total Premium} = \text{Final Premium per Tonne} \times \text{volume\_tonnes}$$
 
 ---
 
@@ -91,125 +88,94 @@ $$\text{Total Premium} = \text{Premium per Tonne} \times \text{volume\_tonnes}$$
 
 ```mermaid
 graph TD
-    A[Input: Baseline & Product Emissions] --> B[Calculate CO₂ Savings]
-    B --> C{Savings > 0?}
-    C -->|Yes| D[Abatement Cost = Savings × Cost per tCO₂]
-    C -->|No| E[Abatement Cost = 0]
-    D --> F[Add Verification Cost]
+    A[Input: Emissions & Lifetime] --> B[Calculate CO₂ Savings]
+    B --> C["Amortized Abatement Cost<br/>(Savings × Cost) / Lifetime"]
+    
+    D[Input: Verification & Production] --> E[Amortized Verification Cost<br/>Annual Cost / Annual Vol]
+    
+    C --> F[Base Premium Stack]
     E --> F
-    F --> G[Base Cost Stack]
-    G --> H[Add Margin %]
-    H --> I[Calculate Customer Value Offset<br/>CBAM Avoidance]
-    I --> J[Pre-Multiplier Premium =<br/>Base + Margin - Offset]
     
-    K[Input: Allocation Method] --> L[Calculate Segment Multiplier]
-    M[Input: Customer Segment] --> L
+    G[Input: WTP Multiplier] --> J[Calculate Total Multiplier]
+    H[Input: Customer Segment] --> J
+    I[Input: Allocation Method] --> J
     
-    J --> N[Apply Multipliers:<br/>WTP × Segment]
+    F --> K[Apply Total Multiplier]
+    J --> K
+    
+    K --> L[Calculated Premium]
+    
+    M[Input: Floor/Ceiling] --> N{Apply Constraints}
     L --> N
-    O[Input: WTP Multiplier] --> N
     
-    N --> P[Premium per Tonne]
-    
-    Q[Input: Floor/Ceiling] --> R{Apply Constraints}
-    P --> R
-    
-    R --> S[Final Premium per Tonne]
-    S --> T[Calculate Premium per tCO₂]
-    S --> U[Calculate Total Premium<br/>Premium × Volume]
-    
-    style B fill:#e1f5ff
-    style G fill:#fff4e1
-    style L fill:#ffe1f0
-    style S fill:#c8e6c9
-    style T fill:#c8e6c9
-    style U fill:#c8e6c9
+    N --> O[Final Premium per Tonne]
+    O --> P[Calculate Total Premium]
 ```
 
 ## Data Flow with Example Values
 
+Based on the example: Abatement ₹5000/tCO₂, Intensity 2.36 (Savings), Lifetime 10y, Verification ₹20,000,000/yr, Output 100k t/yr.
+**Market Inputs**: WTP 1.1x, Segment: Automotive (1.2x), Allocation: Physical (1.15x).
+
 ```mermaid
 flowchart LR
     subgraph Inputs
-        A1[Baseline: 2.0 tCO₂/t]
-        A2[Product: 0.8 tCO₂/t]
-        A3[Abatement: ₹5000/tCO₂]
-        A4[Verification: ₹200/t]
-        A5[Margin: 20%]
-        A6[CBAM: ₹6000/tCO₂]
-        A7[Volume: 1000t]
-        A8[Segment: Automotive]
-        A9[Allocation: Physical]
+        A1[Abatement: ₹5000/tCO₂]
+        A2[Savings: 2.36 tCO₂/t]
+        A3[Lifetime: 10 years]
+        A4[Verif: ₹200L/yr]
+        A5[Prod: 100,000 t/yr]
+        A6[WTP: 1.1]
+        A7["Seg: Auto (1.2)"]
+        A8["Alloc: Phys (1.15)"]
     end
     
     subgraph Processing
-        B1[CO₂ Savings: 1.2 tCO₂/t]
-        B2[Abatement: ₹6000/t]
-        B3[Base Cost: ₹6200/t]
-        B4[With Margin: ₹7440/t]
-        B5[After Offset: ₹240/t]
-        B6[Seg Mult: 1.38]
-        B7[Premium: ₹331/t]
+        B1["Amortized Abatement:<br/>(5000 × 2.36) / 10 = ₹1180/t"]
+        B2[Amortized Verif:<br/>20,000,000 / 100,000 = ₹200/t]
+        B3[Base Premium:<br/>1180 + 200 = ₹1380/t]
+        B4[Total Multiplier:<br/>1.1 × 1.2 × 1.15 = 1.518]
+        B5[Final Premium:<br/>1380 × 1.518 = ₹2094.84/t]
     end
     
     subgraph Outputs
-        C1[Premium/tonne: ₹331]
-        C2[Premium/tCO₂: ₹276]
-        C3[Total: ₹331,000]
+        C1[Premium/tonne: ₹2094.84]
+        C2["Total (for 1000t): ₹2,094,840"]
     end
     
     A1 --> B1
     A2 --> B1
-    B1 --> B2
-    A3 --> B2
+    A3 --> B1
+    A4 --> B2
+    A5 --> B2
+    B1 --> B3
     B2 --> B3
-    A4 --> B3
-    B3 --> B4
-    A5 --> B4
+    B3 --> B5
+    A6 --> B4
+    A7 --> B4
+    A8 --> B4
     B4 --> B5
-    A6 --> B5
-    B5 --> B7
-    A8 --> B6
-    A9 --> B6
-    B6 --> B7
-    B7 --> C1
+    B5 --> C1
     C1 --> C2
-    C1 --> C3
-    A7 --> C3
-    
-    style B1 fill:#e1f5ff
-    style B3 fill:#fff4e1
-    style B6 fill:#ffe1f0
-    style C1 fill:#c8e6c9
-    style C2 fill:#c8e6c9
-    style C3 fill:#c8e6c9
-```    
+```
 
-## COmponent Breakdown
+## Component Breakdown
 
 ```mermaid
 graph TB
-    subgraph Cost Structure
-        A[Abatement Cost<br/>₹6000] --> D[Base Cost Stack<br/>₹6200]
-        B[Verification Cost<br/>₹200] --> D
-        D --> E[+ Margin 20%<br/>₹1240]
-        E --> F[Gross Premium<br/>₹7440]
-        F --> G[- CBAM Offset<br/>₹7200]
-        G --> H[Net Pre-Multiplier<br/>₹240]
+    subgraph Amortized Costs
+        A[Abatement Cost<br/>₹5000/tCO₂] --> B[Annualized Abatement<br/>₹1180/t]
+        C[Verification Cost<br/>₹200L/yr] --> D[Annualized Verification<br/>₹200/t]
+        B --> E[Base Premium<br/>₹1380/t]
+        D --> E
     end
     
-    subgraph Multipliers
-        I[Allocation: Physical<br/>×1.15] --> K[Combined<br/>×1.38]
-        J[Segment: Automotive<br/>×1.20] --> K
+    subgraph Market Multipliers
+        F[WTP: 1.1] --> I[Total Multiplier<br/>1.518x]
+        G[Segment: Auto 1.2] --> I
+        H[Alloc: Phys 1.15] --> I
     end
     
-    H --> L[Apply Multipliers]
-    K --> L
-    L --> M[Final Premium<br/>₹331/t]
-    
-    style D fill:#fff4e1
-    style F fill:#ffebcc
-    style H fill:#e1f5ff
-    style K fill:#ffe1f0
-    style M fill:#c8e6c9
+    E --> J[Final Premium<br/>₹2094.84/t]
+    I --> J
 ```
