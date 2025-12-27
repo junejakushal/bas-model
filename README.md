@@ -32,14 +32,14 @@ The calculator determines the **premium price** customers should pay for green s
 
 ### Step 1: CO₂ Savings Calculation
 
-$$\text{CO₂ Savings} = \max(0, \text{baseline\_emission} - \text{product\_emission})$$
+$$\text{CO}_2\text{ Savings} = \max(0, \text{baseline\_emission} - \text{product\_emission})$$
 
 ### Step 2: Amortized Cost Components
 
 **Annualized Abatement Cost per Tonne:**
 This spreads the abatement cost (viewed as upfront or lifecycle cost) over the project lifetime.
 
-$$\text{Amortized Abatement} = \frac{\text{abatement\_cost\_per\_tCO₂} \times \text{CO₂ Savings}}{\text{project\_lifetime\_years}}$$
+$$\text{Amortized Abatement} = \frac{\text{abatement\_cost\_per\_tCO}_2 \times \text{CO}_2\text{ Savings}}{\text{project\_lifetime\_years}}$$
 
 **Annualized Verification Cost per Tonne:**
 Spreads fixed annual verification costs over the annual production volume.
@@ -77,7 +77,7 @@ $$\text{Final Premium} = \min(\max(\text{Calculated Premium}, \text{floor}), \te
 ### Step 6: Derived Metrics
 
 **Premium per tCO₂ saved:**
-$$\text{Premium per tCO₂} = \frac{\text{Final Premium per Tonne}}{\text{CO₂ Savings}}$$
+$$\text{Premium per tCO}_2 = \frac{\text{Final Premium per Tonne}}{\text{CO}_2\text{ Savings}}$$
 
 **Total premium for volume:**
 $$\text{Total Premium} = \text{Final Premium per Tonne} \times \text{volume\_tonnes}$$
@@ -179,3 +179,4 @@ graph TB
     E --> J[Final Premium<br/>₹2094.84/t]
     I --> J
 ```
+
