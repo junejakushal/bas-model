@@ -75,10 +75,10 @@
     stroke: none,
     inset: 4pt,
     [*1. Setup*], [Select *HRC* + *Automotive*. Note Baseline Emission (2.36).],
-    [*2. Inputs*], [Enter Green Emission (*1.76*) -> Savings. Add Abatement (*5000*).],
-    [*3. Logic*], [We don't charge 5000 upfront. We amortize it over 15 years. Verify cost (₹200/ton) added. Apply multipliers (WTP: 1.3, Segment: 1.2, Allocation: 1.15).],
-    [*4. Export*], [Select *EU (CBAM)*. Carbon Price loads (~6500).],
-    [*5. Result*], [Final Premium: *₹13,079*. \"Covers costs + captures global tax value.\"]
+    [*2. Inputs*], [Enter Green Emission (*1.50*) → Savings = 0.86. Add Abatement (*₹5,000*).],
+    [*3. Logic*], [We don't charge 5000 upfront. We amortize it over 15 years. Verify cost (₹200/ton) added. Apply multipliers (WTP: 1.3, Segment: 1.2, Allocation: 1.15 = 1.794).],
+    [*4. Export*], [Select *EU (CBAM)*. Carbon Price loads (₹6,500).],
+    [*5. Result*], [Domestic: *₹873* | Export Component: *₹5,590* | Export Premium: *₹6,463/ton*]
   )
 ])
 
@@ -95,34 +95,34 @@
   [
     #math-note("1. CO2 Savings", 
       $Delta E = E_("baseline") - E_("green")$, 
-      "Ex: 2.36 - 0.50 = 1.86 tCO2 saved."
+      "Ex: 2.36 - 1.50 = 0.86 tCO2 saved."
     )
     
     #v(5pt)
     
     #math-note("2. Amortized Abatement (The Floor)",
       $C_("abate") = (P_("cost") times Delta E) / L_("years")$,
-      "We spread the ₹5000 CAPEX impact over the 15-year project life."
+      "Ex: (₹5,000 × 0.86) / 15 = ₹287/ton."
     )
 
     #v(5pt)
 
     #math-note("3. Verification Cost",
       $C_("ver") = C_("fixed") / V_("annual")$,
-      "Fixed overhead (₹20M) divided by volume (100k tons) = ₹200/ton."
+      "Ex: ₹20M / 100k tons = ₹200/ton. Base = ₹287 + ₹200 = ₹487."
     )
   ],
   [
     #math-note("4. The Multiplier (Compound)",
       $M_("total") = M_("wtp") times M_("seg") times M_("alloc")$,
-      "We multiply (don't add) to account for exponential complexity. Ex: 1.3 (WTP) × 1.2 (Auto) × 1.15 (Phys) = 1.79."
+      "Ex: 1.3 × 1.2 × 1.15 = 1.794. Domestic = ₹487 × 1.794 = ₹873."
     )
 
     #v(5pt)
 
     #math-note("5. Export Component (CBAM)",
       $P_("exp") = Delta E times P_("carbon") times (1 - f_("free"))$,
-      "We add the avoided carbon tax to the price. If P_carbon is ₹6500 (EU), we capture that value."
+      "Ex: 0.86 × ₹6,500 = ₹5,590. Export Premium = ₹873 + ₹5,590 = ₹6,463."
     )
   ]
 )
